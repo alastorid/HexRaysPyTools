@@ -33,6 +33,8 @@ def _enable_library_ordinals(library_num):
 
     dll.get_idati.restype = ctypes.POINTER(til_t)
     idati = dll.get_idati()
+    if idati == None:
+        idati = idaapi.get_idati()
     dll.enable_numbered_types(idati.contents.base[library_num], True)
 
 
@@ -41,9 +43,11 @@ def choose_til():
     """ Creates a list of loaded libraries, asks user to take one of them and returns it with
     information about max ordinal and whether it's local or imported library """
     idati = idaapi.cvar.idati
+    if idati == None:
+        idati = idaapi.get_idati()
     list_type_library = [(idati, idati.name, idati.desc)]
-    for idx in range(idaapi.cvar.idati.nbases):
-        type_library = idaapi.cvar.idati.base(idx)          # type: idaapi.til_t
+    for idx in range(idati.nbases):
+        type_library = idati.base(idx)          # type: idaapi.til_t
         list_type_library.append((type_library, type_library.name, type_library.desc))
 
     library_chooser = forms.MyChoose(
@@ -64,8 +68,11 @@ def choose_til():
 
 
 def import_type(library, name):
-    if library.name != idaapi.cvar.idati.name:
-        last_ordinal = idaapi.get_ordinal_qty(idaapi.cvar.idati)
+    idati = idaapi.cvar.idati
+    if idati == None:
+        idati = idaapi.get_idati()
+    if library.name != idati.name:
+        last_ordinal = idaapi.get_ordinal_qty(idati)
         type_id = idaapi.import_type(library, -1, name)  # tid_t
         if type_id != idaapi.BADORD:
             return last_ordinal
